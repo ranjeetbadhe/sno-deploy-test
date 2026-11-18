@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-demo-html
+data:
+  index.html: |
+    <html><body><h1>nginx on SNO3 - deployed by RHACM + Argo CD from GitHub</h1></body></html>

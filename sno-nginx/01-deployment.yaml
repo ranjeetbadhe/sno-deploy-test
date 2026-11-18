@@ -1,52 +1,48 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
-  namespace: sno-nginx
-  labels:
-    app: nginx
+  name: nginx-demo
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: nginx
+      app: nginx-demo
   template:
     metadata:
       labels:
-        app: nginx
+        app: nginx-demo
     spec:
       containers:
         - name: nginx
-          image: nginxinc/nginx-unprivileged:1.29-alpine
-          imagePullPolicy: IfNotPresent
+          image: registry.access.redhat.com/ubi9/nginx-124:latest
+          command: ["nginx", "-g", "daemon off;"]
           ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: html
+              mountPath: /opt/app-root/src/index.html
+              subPath: index.html
           resources:
             requests:
-              cpu: 100m
+              cpu: 50m
               memory: 64Mi
             limits:
               cpu: 500m
               memory: 256Mi
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 15
-            periodSeconds: 20
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            runAsNonRoot: true
-            seccompProfile:
-              type: RuntimeDefault
+      volumes:
+        - name: html
+          configMap:
+            name: nginx-demo-html
